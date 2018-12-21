@@ -126,20 +126,25 @@ func TestCreate(t *testing.T) {
 	CatTitle = fake.Title()
 	NewsOneTitle = fake.Title()
 	NewsTwoTitle = fake.Title()
-	userJson := `{
-		"Urld" : "` + fake.Word() + `",
-		"UserID" : 1,
-		"Parent" : "",
-		"Title" : "` + CatTitle + `",
-		"Description" : "` + fake.ParagraphsN(1) + `",
-		"Content" : "` + fake.Paragraphs() + `",
-		"Meta_title" : "` + fake.Title() + `",
-		"Meta_descr" : "` + fake.ParagraphsN(1) + `",
-		"Kind" : 1,
-		"Status" : 1,
-	}`
+	el := &contentelements.Contentelement{
+		Urld:        fake.Word(),
+		UserID:      1,
+		Title:       CatTitle,
+		Description: fake.ParagraphsN(1),
+		Content:     fake.Paragraphs(),
+		Meta_title:  fake.Title(),
+		Meta_descr:  fake.ParagraphsN(1),
+		Kind:        1,
+		Status:      1,
+	}
 
-	resp := doRequest(url, "POST", userJson, AdminToken)
+	uj, err := json.Marshal(el)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
+
+	resp := doRequest(url, "POST", string(uj), AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
@@ -153,20 +158,26 @@ func TestCreate(t *testing.T) {
 
 	CatId = u.Data.ID
 
-	userJson = `{
-		"Urld" : "` + fake.Word() + `",
-		"UserID" : 1,
-		"Parent" : ` + fmt.Sprintf("%d", CatId) + `,
-		"Title" : "` + NewsOneTitle + `",
-		"Description" : "` + fake.ParagraphsN(1) + `",
-		"Content" : "` + fake.Paragraphs() + `",
-		"Meta_title" : "` + fake.Title() + `",
-		"Meta_descr" : "` + fake.ParagraphsN(1) + `",
-		"Kind" : 1,
-		"Status" : 1,
-	}`
+	el = &contentelements.Contentelement{
+		Urld:        fake.Word(),
+		UserID:      1,
+		Parent:      int(CatId),
+		Title:       NewsOneTitle,
+		Description: fake.ParagraphsN(1),
+		Content:     fake.Paragraphs(),
+		Meta_title:  fake.Title(),
+		Meta_descr:  fake.ParagraphsN(1),
+		Kind:        1,
+		Status:      1,
+	}
 
-	resp = doRequest(url, "POST", userJson, AdminToken)
+	uj, err = json.Marshal(el)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
+
+	resp = doRequest(url, "POST", string(uj), AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
@@ -180,20 +191,26 @@ func TestCreate(t *testing.T) {
 
 	NewsOneId = u.Data.ID
 
-	userJson = `{
-		"Urld" : "` + fake.Word() + `",
-		"UserID" : 1,
-		"Parent" : ` + fmt.Sprintf("%d", CatId) + `,
-		"Title" : "` + NewsTwoTitle + `",
-		"Description" : "` + fake.ParagraphsN(1) + `",
-		"Content" : "` + fake.Paragraphs() + `",
-		"Meta_title" : "` + fake.Title() + `",
-		"Meta_descr" : "` + fake.ParagraphsN(1) + `",
-		"Kind" : 1,
-		"Status" : 1,
-	}`
+	el = &contentelements.Contentelement{
+		Urld:        fake.Word(),
+		UserID:      1,
+		Parent:      int(CatId),
+		Title:       NewsTwoTitle,
+		Description: fake.ParagraphsN(1),
+		Content:     fake.Paragraphs(),
+		Meta_title:  fake.Title(),
+		Meta_descr:  fake.ParagraphsN(1),
+		Kind:        1,
+		Status:      1,
+	}
 
-	resp = doRequest(url, "POST", userJson, AdminToken)
+	uj, err = json.Marshal(el)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
+
+	resp = doRequest(url, "POST", string(uj), AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
