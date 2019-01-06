@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -101,6 +102,14 @@ func deleteElement(t *testing.T, id uint) {
 	}
 
 	return
+}
+
+func toUrlcode(str string) (string, error) {
+	u, err := url.Parse(str)
+	if err != nil {
+		return "", err
+	}
+	return u.String(), nil
 }
 
 func TestAdminLogin(t *testing.T) {
@@ -268,12 +277,14 @@ func TestGetAll(t *testing.T) {
 
 	//---------------
 
-	url1 := Murl + "?title=" + NewsTwoTitle
+	utitle, _ := toUrlcode(NewsTwoTitle)
+
+	url1 := Murl + "?title=" + utitle
 
 	resp1 := doRequest(url1, "GET", "", " ")
 
 	if resp1.StatusCode != 200 {
-		t.Errorf("Success expected: %d", resp1.StatusCode)
+		t.Errorf("Success expected: %d%s", resp1.StatusCode, url1)
 	}
 
 	u1 := readElementsBody(resp1, t)
@@ -293,7 +304,7 @@ func TestGetAll(t *testing.T) {
 	resp2 := doRequest(url2, "GET", "", " ")
 
 	if resp2.StatusCode != 200 {
-		t.Errorf("Success expected: %d", resp2.StatusCode)
+		t.Errorf("Success expected: %d %s", resp2.StatusCode, url2)
 	}
 
 	u2 := readElementsBody(resp2, t)
@@ -302,8 +313,8 @@ func TestGetAll(t *testing.T) {
 		t.Fatal(u2.Errors)
 	}
 
-	if len(u.Data) != 2 {
-		t.Errorf("Wrong childrens search: %d", len(u.Data))
+	if len(u2.Data) != 2 {
+		t.Errorf("Wrong childrens search: %d %s", len(u2.Data), url2)
 	}
 
 	return

@@ -94,14 +94,14 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if parent != "" {
-		db = db.Where("parent = ?", "%"+parent+"%")
+		db = db.Where("parent = ?", parent)
 	}
 
 	if sort != "" {
 		db = db.Order(sort)
 	}
 
-	db.Preload("Contentcomment").Preload("Contenttag").Find(&elements)
+	db.Preload("Comments").Preload("Tags").Find(&elements)
 
 	rsp.Data = &elements
 
@@ -115,7 +115,7 @@ func actionGetOne(w http.ResponseWriter, r *http.Request) {
 	)
 
 	vars := mux.Vars(r)
-	App.DB.Preload("Contentcomment").Preload("Contenttag").First(&element, vars["id"])
+	App.DB.Preload("Comments").Preload("Tags").First(&element, vars["id"])
 
 	if element.ID == 0 {
 		rsp.Errors.Add("ID", "Contentelement not found")
