@@ -17,6 +17,7 @@ import (
 )
 
 var AdminToken string
+var UserToken string
 var CatId uint
 var NewsOneId uint
 var NewsTwoId uint
@@ -33,6 +34,16 @@ type TestContentelements struct {
 type TestContentelement struct {
 	Errors []core.ErrorMsg
 	Data   contentelements.Contentelement
+}
+
+type TestContentcomments struct {
+	Errors []core.ErrorMsg
+	Data   contentelements.Contentcomments
+}
+
+type TestContenttags struct {
+	Errors []core.ErrorMsg
+	Data   contentelements.Contenttags
 }
 
 type TestUser struct {
@@ -56,6 +67,26 @@ func doRequest(url, proto, userJson, token string) *http.Response {
 
 func readElementsBody(r *http.Response, t *testing.T) TestContentelements {
 	var u TestContentelements
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	json.Unmarshal([]byte(body), &u)
+	return u
+}
+
+func readCommentsBody(r *http.Response, t *testing.T) TestContentcomments {
+	var u TestContentcomments
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	json.Unmarshal([]byte(body), &u)
+	return u
+}
+
+func readTagsBody(r *http.Response, t *testing.T) TestContenttags {
+	var u TestContenttags
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -130,6 +161,24 @@ func TestAdminLogin(t *testing.T) {
 	return
 }
 
+func TestUserLogin(t *testing.T) {
+
+	url := "http://gorest.ga/api/users/login"
+	var userJson = `{"Email":"testuser@test.t", "Password":"testpass"}`
+
+	resp := doRequest(url, "POST", userJson, "")
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u := readUserBody(resp, t)
+
+	UserToken = u.Data.Token
+
+	return
+}
+
 func TestCreate(t *testing.T) {
 	url := Murl
 	CatTitle = fake.Title()
@@ -145,6 +194,7 @@ func TestCreate(t *testing.T) {
 		Meta_descr:  fake.ParagraphsN(1),
 		Kind:        1,
 		Status:      1,
+		Tags:        "news",
 	}
 
 	uj, err := json.Marshal(el)
@@ -178,6 +228,7 @@ func TestCreate(t *testing.T) {
 		Meta_descr:  fake.ParagraphsN(1),
 		Kind:        1,
 		Status:      1,
+		Tags:        "news,test",
 	}
 
 	uj, err = json.Marshal(el)
@@ -211,6 +262,7 @@ func TestCreate(t *testing.T) {
 		Meta_descr:  fake.ParagraphsN(1),
 		Kind:        1,
 		Status:      1,
+		Tags:        "news,test,check",
 	}
 
 	uj, err = json.Marshal(el)
@@ -346,6 +398,79 @@ func TestGetOne(t *testing.T) {
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
+	}
+
+	return
+}
+
+func TestAddComments(t *testing.T) {
+	url := fmt.Sprintf("%s%s%d%s", Murl, "/", int(NewsOneId), "/comments")
+	el := &contentelements.Contentcomment{
+		Comment: fake.ParagraphsN(1),
+		UserID:  2,
+		Parent:  0,
+	}
+
+	uj, err := json.Marshal(el)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
+
+	resp := doRequest(url, "POST", string(uj), UserToken)
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u := readCommentsBody(resp, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	return
+}
+
+func TestReadComments(t *testing.T) {
+	url := fmt.Sprintf("%s%s%d%s", Murl, "/", int(NewsOneId), "/comments")
+
+	resp := doRequest(url, "GET", "", "")
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u := readCommentsBody(resp, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if len(u.Data) < 1 {
+		t.Errorf("Wrong comments count: %d", len(u.Data))
+	}
+
+	return
+}
+
+func TestGetTags(t *testing.T) {
+	url := "http://gorest.ga/api/contenttags"
+
+	resp := doRequest(url, "GET", "", "")
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u := readTagsBody(resp, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if len(u.Data) < 1 {
+		t.Errorf("Wrong comments count: %d", len(u.Data))
 	}
 
 	return

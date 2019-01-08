@@ -2,6 +2,7 @@ package contentelements
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/go-rest-framework/core"
 	"github.com/gorilla/mux"
@@ -12,6 +13,8 @@ import (
 var App core.App
 
 type Contentelements []Contentelement
+type Contentcomments []Contentcomment
+type Contenttags []Contenttag
 
 type Contentelement struct {
 	gorm.Model
@@ -25,8 +28,8 @@ type Contentelement struct {
 	Meta_descr  string `gorm:"type:text"`
 	Kind        int
 	Status      int
+	Tags        string
 	Comments    []Contentcomment
-	Tags        []Contenttag
 }
 
 type Contentcomment struct {
@@ -39,8 +42,8 @@ type Contentcomment struct {
 
 type Contenttag struct {
 	gorm.Model
-	Name             string
-	ContentelementID int
+	Name   string
+	Weight int
 }
 
 func Configure(a core.App) {
@@ -54,6 +57,11 @@ func Configure(a core.App) {
 	App.R.HandleFunc("/api/contentelements", App.Protect(actionCreate, []string{"admin"})).Methods("POST")
 	App.R.HandleFunc("/api/contentelements/{id}", App.Protect(actionUpdate, []string{"admin"})).Methods("PATCH")
 	App.R.HandleFunc("/api/contentelements/{id}", App.Protect(actionDelete, []string{"admin"})).Methods("DELETE")
+
+	App.R.HandleFunc("/api/contentelements/{id}/comments", actionComments).Methods("GET")
+	App.R.HandleFunc("/api/contentelements/{id}/comments", App.Protect(actionAddComment, []string{"user"})).Methods("POST")
+
+	App.R.HandleFunc("/api/contenttags", actionTags).Methods("GET")
 }
 
 func actionGetAll(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +109,7 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 		db = db.Order(sort)
 	}
 
-	db.Preload("Comments").Preload("Tags").Find(&elements)
+	db.Preload("Comments").Find(&elements)
 
 	rsp.Data = &elements
 
@@ -115,7 +123,7 @@ func actionGetOne(w http.ResponseWriter, r *http.Request) {
 	)
 
 	vars := mux.Vars(r)
-	App.DB.Preload("Comments").Preload("Tags").First(&element, vars["id"])
+	App.DB.Preload("Comments").First(&element, vars["id"])
 
 	if element.ID == 0 {
 		rsp.Errors.Add("ID", "Contentelement not found")
@@ -139,6 +147,22 @@ func actionCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rsp.Data = &element
+
+	s := strings.Split(element.Tags, ",")
+
+	for _, v := range s {
+		tag := Contenttag{
+			Name:   v,
+			Weight: 1,
+		}
+		App.DB.Where("name = ?", v).First(&tag)
+		if tag.ID == 0 {
+			App.DB.Create(&tag)
+		} else {
+			tag.Weight = tag.Weight + 1
+			App.DB.Save(&tag)
+		}
+	}
 
 	w.Write(rsp.Make())
 }
@@ -189,6 +213,66 @@ func actionDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rsp.Data = &element
+
+	w.Write(rsp.Make())
+}
+
+func actionComments(w http.ResponseWriter, r *http.Request) {
+	var (
+		comments Contentcomments
+		rsp      = core.Response{Data: &comments}
+	)
+
+	vars := mux.Vars(r)
+	App.DB.Where("contentelement_id = ?", vars["id"]).Find(&comments)
+
+	rsp.Data = &comments
+
+	w.Write(rsp.Make())
+}
+
+func actionAddComment(w http.ResponseWriter, r *http.Request) {
+	var (
+		element Contentelement
+		comment Contentcomment
+		rsp     = core.Response{Data: &comment}
+		vars    = mux.Vars(r)
+	)
+
+	App.DB.First(&element, vars["id"])
+
+	if element.ID == 0 {
+		rsp.Errors.Add("ID", "Contentelement not found")
+		return
+	}
+
+	if rsp.IsJsonParseDone(r.Body) {
+		if rsp.IsValidate() {
+			comment.ContentelementID = int(element.ID)
+			App.DB.Create(&comment)
+		}
+	}
+
+	rsp.Data = &comment
+
+	w.Write(rsp.Make())
+}
+
+func actionTags(w http.ResponseWriter, r *http.Request) {
+	var (
+		tags Contenttags
+		rsp  = core.Response{Data: &tags}
+		sort = r.FormValue("sort")
+		db   = App.DB
+	)
+
+	if sort != "" {
+		db = db.Order(sort)
+	}
+
+	db.Find(&tags)
+
+	rsp.Data = &tags
 
 	w.Write(rsp.Make())
 }
