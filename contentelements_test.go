@@ -24,6 +24,7 @@ var NewsTwoId uint
 var CatTitle string
 var NewsOneTitle string
 var NewsTwoTitle string
+var CommentId uint
 var Murl = "http://gorest.ga/api/contentelements"
 
 type TestContentelements struct {
@@ -34,6 +35,11 @@ type TestContentelements struct {
 type TestContentelement struct {
 	Errors []core.ErrorMsg
 	Data   contentelements.Contentelement
+}
+
+type TestContentcomment struct {
+	Errors []core.ErrorMsg
+	Data   contentelements.Contentcomment
 }
 
 type TestContentcomments struct {
@@ -67,6 +73,16 @@ func doRequest(url, proto, userJson, token string) *http.Response {
 
 func readElementsBody(r *http.Response, t *testing.T) TestContentelements {
 	var u TestContentelements
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	json.Unmarshal([]byte(body), &u)
+	return u
+}
+
+func readCommentBody(r *http.Response, t *testing.T) TestContentcomment {
+	var u TestContentcomment
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -423,11 +439,13 @@ func TestAddComments(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readCommentsBody(resp, t)
+	u := readCommentBody(resp, t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
 	}
+
+	CommentId = u.Data.ID
 
 	return
 }
@@ -449,6 +467,55 @@ func TestReadComments(t *testing.T) {
 
 	if len(u.Data) < 1 {
 		t.Errorf("Wrong comments count: %d", len(u.Data))
+	}
+
+	return
+}
+
+func TestUpdateComments(t *testing.T) {
+	url := fmt.Sprintf("%s%s%d%s%d", Murl, "/", int(NewsOneId), "/comments/", int(CommentId))
+	el := &contentelements.Contentcomment{
+		Comment: "testtest",
+	}
+
+	uj, err := json.Marshal(el)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
+
+	resp := doRequest(url, "PATCH", string(uj), UserToken)
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u := readCommentBody(resp, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if u.Data.Comment != "testtest" {
+		t.Errorf("Wrong new comment: %s", u.Data.Comment)
+	}
+
+	return
+}
+
+func TestDeleteComments(t *testing.T) {
+	url := fmt.Sprintf("%s%s%d%s%d", Murl, "/", int(NewsOneId), "/comments/", int(CommentId))
+
+	resp := doRequest(url, "DELETE", "", UserToken)
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u := readCommentsBody(resp, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
 	}
 
 	return

@@ -60,6 +60,8 @@ func Configure(a core.App) {
 
 	App.R.HandleFunc("/api/contentelements/{id}/comments", actionComments).Methods("GET")
 	App.R.HandleFunc("/api/contentelements/{id}/comments", App.Protect(actionAddComment, []string{"user"})).Methods("POST")
+	App.R.HandleFunc("/api/contentelements/{id}/comments/{cid}", App.Protect(actionUpdateComment, []string{"user"})).Methods("PATCH")
+	App.R.HandleFunc("/api/contentelements/{id}/comments/{cid}", App.Protect(actionDeleteComment, []string{"user"})).Methods("DELETE")
 
 	App.R.HandleFunc("/api/contenttags", actionTags).Methods("GET")
 }
@@ -250,6 +252,56 @@ func actionAddComment(w http.ResponseWriter, r *http.Request) {
 		if rsp.IsValidate() {
 			comment.ContentelementID = int(element.ID)
 			App.DB.Create(&comment)
+		}
+	}
+
+	rsp.Data = &comment
+
+	w.Write(rsp.Make())
+}
+
+func actionUpdateComment(w http.ResponseWriter, r *http.Request) {
+	var (
+		data    Contentcomment
+		comment Contentcomment
+		rsp     = core.Response{Data: &data}
+	)
+
+	if rsp.IsJsonParseDone(r.Body) {
+		if rsp.IsValidate() {
+
+			vars := mux.Vars(r)
+			App.DB.First(&comment, vars["cid"])
+
+			if comment.ID == 0 {
+				rsp.Errors.Add("ID", "Comment not found")
+			} else {
+				App.DB.Model(&comment).Updates(data)
+			}
+		}
+	}
+
+	rsp.Data = &comment
+
+	w.Write(rsp.Make())
+}
+
+func actionDeleteComment(w http.ResponseWriter, r *http.Request) {
+	var (
+		comment Contentcomment
+		rsp     = core.Response{Data: &comment}
+	)
+
+	vars := mux.Vars(r)
+	App.DB.First(&comment, vars["cid"])
+
+	if comment.ID == 0 {
+		rsp.Errors.Add("ID", "Contentcomment not found")
+	} else {
+		if App.IsTest {
+			App.DB.Unscoped().Delete(&comment)
+		} else {
+			App.DB.Delete(&comment)
 		}
 	}
 
