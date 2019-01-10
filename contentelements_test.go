@@ -447,6 +447,66 @@ func TestAddComments(t *testing.T) {
 
 	CommentId = u.Data.ID
 
+	el1 := &contentelements.Contentcomment{
+		Comment: fake.ParagraphsN(1),
+		UserID:  2,
+		Parent:  int(CommentId),
+	}
+
+	uj1, err := json.Marshal(el1)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
+
+	resp1 := doRequest(url, "POST", string(uj1), UserToken)
+
+	if resp1.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp1.StatusCode)
+	}
+
+	u1 := readCommentBody(resp1, t)
+
+	if len(u1.Errors) != 0 {
+		t.Fatal(u1.Errors)
+	}
+
+	el2 := &contentelements.Contentcomment{
+		Comment: fake.ParagraphsN(1),
+		UserID:  2,
+		Parent:  int(CommentId),
+	}
+
+	uj2, err := json.Marshal(el2)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
+
+	resp2 := doRequest(url, "POST", string(uj2), UserToken)
+
+	if resp2.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp2.StatusCode)
+	}
+
+	el3 := &contentelements.Contentcomment{
+		Comment: fake.ParagraphsN(1),
+		UserID:  2,
+		Parent:  int(u1.Data.ID),
+	}
+
+	uj3, err := json.Marshal(el3)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
+
+	resp3 := doRequest(url, "POST", string(uj3), UserToken)
+
+	if resp3.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp3.StatusCode)
+	}
+
 	return
 }
 
@@ -503,23 +563,23 @@ func TestUpdateComments(t *testing.T) {
 	return
 }
 
-func TestDeleteComments(t *testing.T) {
-	url := fmt.Sprintf("%s%s%d%s%d", Murl, "/", int(NewsOneId), "/comments/", int(CommentId))
+//func TestDeleteComments(t *testing.T) {
+//url := fmt.Sprintf("%s%s%d%s%d", Murl, "/", int(NewsOneId), "/comments/", int(CommentId))
 
-	resp := doRequest(url, "DELETE", "", UserToken)
+//resp := doRequest(url, "DELETE", "", UserToken)
 
-	if resp.StatusCode != 200 {
-		t.Errorf("Success expected: %d", resp.StatusCode)
-	}
+//if resp.StatusCode != 200 {
+//t.Errorf("Success expected: %d", resp.StatusCode)
+//}
 
-	u := readCommentsBody(resp, t)
+//u := readCommentsBody(resp, t)
 
-	if len(u.Errors) != 0 {
-		t.Fatal(u.Errors)
-	}
+//if len(u.Errors) != 0 {
+//t.Fatal(u.Errors)
+//}
 
-	return
-}
+//return
+//}
 
 func TestGetTags(t *testing.T) {
 	url := "http://gorest.ga/api/contenttags"
@@ -543,24 +603,24 @@ func TestGetTags(t *testing.T) {
 	return
 }
 
-func TestDelete(t *testing.T) {
-	url := fmt.Sprintf("%s%s%d", Murl, "/", 0)
+//func TestDelete(t *testing.T) {
+//url := fmt.Sprintf("%s%s%d", Murl, "/", 0)
 
-	resp := doRequest(url, "DELETE", "", AdminToken)
+//resp := doRequest(url, "DELETE", "", AdminToken)
 
-	if resp.StatusCode != 200 {
-		t.Errorf("Success expected: %d", resp.StatusCode)
-	}
+//if resp.StatusCode != 200 {
+//t.Errorf("Success expected: %d", resp.StatusCode)
+//}
 
-	u := readUserBody(resp, t)
+//u := readUserBody(resp, t)
 
-	if len(u.Errors) == 0 {
-		t.Fatal("wrong id validation dont work")
-	}
+//if len(u.Errors) == 0 {
+//t.Fatal("wrong id validation dont work")
+//}
 
-	deleteElement(t, CatId)
-	deleteElement(t, NewsOneId)
-	deleteElement(t, NewsTwoId)
+//deleteElement(t, CatId)
+//deleteElement(t, NewsOneId)
+//deleteElement(t, NewsTwoId)
 
-	return
-}
+//return
+//}

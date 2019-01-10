@@ -38,6 +38,7 @@ type Contentcomment struct {
 	UserID           int
 	Parent           int
 	ContentelementID int
+	Comments         []Contentcomment `gorm:"auto_preload;foreignkey:Parent"`
 }
 
 type Contenttag struct {
@@ -111,7 +112,7 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 		db = db.Order(sort)
 	}
 
-	db.Preload("Comments").Find(&elements)
+	db.Find(&elements)
 
 	rsp.Data = &elements
 
@@ -125,7 +126,7 @@ func actionGetOne(w http.ResponseWriter, r *http.Request) {
 	)
 
 	vars := mux.Vars(r)
-	App.DB.Preload("Comments").First(&element, vars["id"])
+	App.DB.First(&element, vars["id"])
 
 	if element.ID == 0 {
 		rsp.Errors.Add("ID", "Contentelement not found")
@@ -223,10 +224,14 @@ func actionComments(w http.ResponseWriter, r *http.Request) {
 	var (
 		comments Contentcomments
 		rsp      = core.Response{Data: &comments}
+		db       = App.DB
 	)
 
 	vars := mux.Vars(r)
-	App.DB.Where("contentelement_id = ?", vars["id"]).Find(&comments)
+	db = db.Where("contentelement_id = ?", vars["id"])
+	db = db.Where("parent = ?", 0)
+	db = db.Set("gorm:auto_preload", true)
+	db.Preload("Comments").Find(&comments)
 
 	rsp.Data = &comments
 
