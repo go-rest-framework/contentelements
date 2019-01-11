@@ -1,6 +1,7 @@
 package contentelements
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -29,7 +30,7 @@ type Contentelement struct {
 	Kind        int
 	Status      int
 	Tags        string
-	Comments    []Contentcomment
+	Elements    []Contentelement `gorm:"auto_preload;foreignkey:Parent"`
 }
 
 type Contentcomment struct {
@@ -78,6 +79,9 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 		content     = r.FormValue("content")
 		sort        = r.FormValue("sort")
 		parent      = r.FormValue("parent")
+		tree        = r.FormValue("tree")
+		limit       = r.FormValue("limit")
+		offset      = r.FormValue("offset")
 		db          = App.DB
 	)
 
@@ -110,6 +114,19 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 
 	if sort != "" {
 		db = db.Order(sort)
+	}
+
+	if limit != "" {
+		db = db.Limit(limit)
+	}
+
+	if offset != "" {
+		db = db.Offset(offset)
+	}
+
+	if tree == "1" {
+		db = db.Set("gorm:auto_preload", true)
+		db = db.Preload("Elements")
 	}
 
 	db.Find(&elements)
@@ -145,6 +162,7 @@ func actionCreate(w http.ResponseWriter, r *http.Request) {
 
 	if rsp.IsJsonParseDone(r.Body) {
 		if rsp.IsValidate() {
+			fmt.Println("user name is = " + r.Header.Get("name"))
 			App.DB.Create(&element)
 		}
 	}
@@ -224,6 +242,8 @@ func actionComments(w http.ResponseWriter, r *http.Request) {
 	var (
 		comments Contentcomments
 		rsp      = core.Response{Data: &comments}
+		limit    = r.FormValue("limit")
+		offset   = r.FormValue("offset")
 		db       = App.DB
 	)
 
@@ -231,6 +251,15 @@ func actionComments(w http.ResponseWriter, r *http.Request) {
 	db = db.Where("contentelement_id = ?", vars["id"])
 	db = db.Where("parent = ?", 0)
 	db = db.Set("gorm:auto_preload", true)
+
+	if limit != "" {
+		db = db.Limit(limit)
+	}
+
+	if offset != "" {
+		db = db.Offset(offset)
+	}
+
 	db.Preload("Comments").Find(&comments)
 
 	rsp.Data = &comments
