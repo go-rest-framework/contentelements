@@ -162,7 +162,6 @@ func actionCreate(w http.ResponseWriter, r *http.Request) {
 
 	if rsp.IsJsonParseDone(r.Body) {
 		if rsp.IsValidate() {
-			fmt.Println("user name is = " + r.Header.Get("name"))
 			App.DB.Create(&element)
 		}
 	}
@@ -204,7 +203,12 @@ func actionUpdate(w http.ResponseWriter, r *http.Request) {
 			if element.ID == 0 {
 				rsp.Errors.Add("ID", "Contentelement not found")
 			} else {
-				App.DB.Model(&element).Updates(data)
+				idstring := fmt.Sprintf("%d", element.UserID)
+				if idstring != r.Header.Get("id") {
+					rsp.Errors.Add("ID", "Only owner can change element")
+				} else {
+					App.DB.Model(&element).Updates(data)
+				}
 			}
 		}
 	}
@@ -310,7 +314,12 @@ func actionUpdateComment(w http.ResponseWriter, r *http.Request) {
 			if comment.ID == 0 {
 				rsp.Errors.Add("ID", "Comment not found")
 			} else {
-				App.DB.Model(&comment).Updates(data)
+				idstring := fmt.Sprintf("%d", comment.UserID)
+				if idstring != r.Header.Get("id") {
+					rsp.Errors.Add("ID", "Only owner can change element")
+				} else {
+					App.DB.Model(&comment).Updates(data)
+				}
 			}
 		}
 	}
