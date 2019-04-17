@@ -31,6 +31,7 @@ type Contentelement struct {
 	Status      int
 	Tags        string
 	Elements    []Contentelement `gorm:"auto_preload;foreignkey:Parent"`
+	Comments    []Contentcomment
 }
 
 type Contentcomment struct {
@@ -140,10 +141,16 @@ func actionGetOne(w http.ResponseWriter, r *http.Request) {
 	var (
 		element Contentelement
 		rsp     = core.Response{Data: &element}
+		db      = App.DB
 	)
 
 	vars := mux.Vars(r)
-	App.DB.First(&element, vars["id"])
+
+	db = db.Set("gorm:auto_preload", true)
+	db = db.Preload("Elements")
+	db = db.Preload("Comments")
+
+	db.First(&element, vars["id"])
 
 	if element.ID == 0 {
 		rsp.Errors.Add("ID", "Contentelement not found")
