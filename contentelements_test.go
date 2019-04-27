@@ -603,24 +603,24 @@ func TestGetTags(t *testing.T) {
 	return
 }
 
-//func TestDelete(t *testing.T) {
-//url := fmt.Sprintf("%s%s%d", Murl, "/", 0)
+func TestDelete(t *testing.T) {
+	url := fmt.Sprintf("%s%s%d", Murl, "/", 0)
 
-//resp := doRequest(url, "DELETE", "", AdminToken)
+	resp := doRequest(url, "DELETE", "", AdminToken)
 
-//if resp.StatusCode != 200 {
-//t.Errorf("Success expected: %d", resp.StatusCode)
-//}
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
 
-//u := readUserBody(resp, t)
+	u := readUserBody(resp, t)
 
-//if len(u.Errors) == 0 {
-//t.Fatal("wrong id validation dont work")
-//}
+	if len(u.Errors) == 0 {
+		t.Fatal("wrong id validation dont work")
+	}
 
-//deleteElement(t, CatId)
-//deleteElement(t, NewsOneId)
-//deleteElement(t, NewsTwoId)
+	deleteElement(t, CatId)
+	deleteElement(t, NewsOneId)
+	deleteElement(t, NewsTwoId)
 
-//return
-//}
+	return
+}
