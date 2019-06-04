@@ -19,34 +19,34 @@ type Contenttags []Contenttag
 
 type Contentelement struct {
 	gorm.Model
-	Urld        string
-	UserID      int
-	Parent      int
-	Title       string
-	Description string `gorm:"type:varchar(500)"`
-	Content     string `gorm:"type:text"`
-	Meta_title  string
-	Meta_descr  string `gorm:"type:text"`
-	Kind        int
-	Status      int
-	Tags        string
-	Elements    []Contentelement `gorm:"auto_preload;foreignkey:Parent"`
-	Comments    []Contentcomment
+	Urld        string           `json:"urld"`
+	UserID      int              `json:"userID"`
+	Parent      int              `json:"parent"`
+	Title       string           `json:"title"`
+	Description string           `json:"description" gorm:"type:varchar(500)"`
+	Content     string           `json:"content" gorm:"type:text"`
+	Meta_title  string           `json:"meta_title"`
+	Meta_descr  string           `json:"meta_descr" gorm:"type:text"`
+	Kind        int              `json:"kind"`
+	Status      int              `json:"status"`
+	Tags        string           `json:"tags"`
+	Elements    []Contentelement `json:"elements" gorm:"auto_preload;foreignkey:Parent"`
+	Comments    []Contentcomment `json:"comments"`
 }
 
 type Contentcomment struct {
 	gorm.Model
-	Comment          string `gorm:"type:varchar(500)"`
-	UserID           int
-	Parent           int
-	ContentelementID int
-	Comments         []Contentcomment `gorm:"auto_preload;foreignkey:Parent"`
+	Comment          string           `json:"comment" gorm:"type:varchar(500)"`
+	UserID           int              `json:"userID"`
+	Parent           int              `json:"parent"`
+	ContentelementID int              `json:"contentelementID"`
+	Comments         []Contentcomment `json:"comments" gorm:"auto_preload;foreignkey:Parent"`
 }
 
 type Contenttag struct {
 	gorm.Model
-	Name   string
-	Weight int
+	Name   string `json:"name"`
+	Weight int    `json:"weight"`
 }
 
 func Configure(a core.App) {

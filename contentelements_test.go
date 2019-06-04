@@ -28,33 +28,33 @@ var CommentId uint
 var Murl = "http://gorest.ga/api/contentelements"
 
 type TestContentelements struct {
-	Errors []core.ErrorMsg
-	Data   contentelements.Contentelements
+	Errors []core.ErrorMsg                 `json:"errors"`
+	Data   contentelements.Contentelements `json:"data"`
 }
 
 type TestContentelement struct {
-	Errors []core.ErrorMsg
-	Data   contentelements.Contentelement
+	Errors []core.ErrorMsg                `json:"errors"`
+	Data   contentelements.Contentelement `json:"data"`
 }
 
 type TestContentcomment struct {
-	Errors []core.ErrorMsg
-	Data   contentelements.Contentcomment
+	Errors []core.ErrorMsg                `json:"errors"`
+	Data   contentelements.Contentcomment `json:"data"`
 }
 
 type TestContentcomments struct {
-	Errors []core.ErrorMsg
-	Data   contentelements.Contentcomments
+	Errors []core.ErrorMsg                 `json:"errors"`
+	Data   contentelements.Contentcomments `json:"data"`
 }
 
 type TestContenttags struct {
-	Errors []core.ErrorMsg
-	Data   contentelements.Contenttags
+	Errors []core.ErrorMsg             `json:"errors"`
+	Data   contentelements.Contenttags `json:"data"`
 }
 
 type TestUser struct {
-	Errors []core.ErrorMsg
-	Data   users.User
+	Errors []core.ErrorMsg `json:"errors"`
+	Data   users.User      `json:"data"`
 }
 
 func doRequest(url, proto, userJson, token string) *http.Response {
@@ -162,7 +162,7 @@ func toUrlcode(str string) (string, error) {
 func TestAdminLogin(t *testing.T) {
 
 	url := "http://gorest.ga/api/users/login"
-	var userJson = `{"Email":"admin@admin.a", "Password":"adminpass"}`
+	var userJson = `{"email":"admin@admin.a", "password":"adminpass"}`
 
 	resp := doRequest(url, "POST", userJson, "")
 
@@ -180,7 +180,7 @@ func TestAdminLogin(t *testing.T) {
 func TestUserLogin(t *testing.T) {
 
 	url := "http://gorest.ga/api/users/login"
-	var userJson = `{"Email":"testuser@test.t", "Password":"testpass"}`
+	var userJson = `{"email":"testuser@test.t", "password":"testpass"}`
 
 	resp := doRequest(url, "POST", userJson, "")
 
@@ -306,7 +306,7 @@ func TestCreate(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	url := fmt.Sprintf("%s%s%d", Murl, "/", CatId)
-	userJson := `{"Title":"` + fake.Title() + `"}`
+	userJson := `{"title":"` + fake.Title() + `"}`
 
 	resp := doRequest(url, "PATCH", userJson, AdminToken)
 
@@ -563,23 +563,23 @@ func TestUpdateComments(t *testing.T) {
 	return
 }
 
-//func TestDeleteComments(t *testing.T) {
-//url := fmt.Sprintf("%s%s%d%s%d", Murl, "/", int(NewsOneId), "/comments/", int(CommentId))
+func TestDeleteComments(t *testing.T) {
+	url := fmt.Sprintf("%s%s%d%s%d", Murl, "/", int(NewsOneId), "/comments/", int(CommentId))
 
-//resp := doRequest(url, "DELETE", "", UserToken)
+	resp := doRequest(url, "DELETE", "", UserToken)
 
-//if resp.StatusCode != 200 {
-//t.Errorf("Success expected: %d", resp.StatusCode)
-//}
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
 
-//u := readCommentsBody(resp, t)
+	u := readCommentsBody(resp, t)
 
-//if len(u.Errors) != 0 {
-//t.Fatal(u.Errors)
-//}
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
 
-//return
-//}
+	return
+}
 
 func TestGetTags(t *testing.T) {
 	url := "http://gorest.ga/api/contenttags"
