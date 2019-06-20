@@ -72,7 +72,7 @@ func Configure(a core.App) {
 func actionGetAll(w http.ResponseWriter, r *http.Request) {
 	var (
 		elements    Contentelements
-		rsp         = core.Response{Data: &elements}
+		rsp         = core.Response{Data: &elements, Req: r}
 		all         = r.FormValue("all")
 		id          = r.FormValue("id")
 		title       = r.FormValue("title")
@@ -102,11 +102,11 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if description != "" {
-		db = db.Where("role LIKE ?", "%"+description+"%")
+		db = db.Where("description LIKE ?", "%"+description+"%")
 	}
 
 	if content != "" {
-		db = db.Where("role LIKE ?", "%"+content+"%")
+		db = db.Where("content LIKE ?", "%"+content+"%")
 	}
 
 	if parent != "" {
@@ -140,7 +140,7 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 func actionGetOne(w http.ResponseWriter, r *http.Request) {
 	var (
 		element Contentelement
-		rsp     = core.Response{Data: &element}
+		rsp     = core.Response{Data: &element, Req: r}
 		db      = App.DB
 	)
 
@@ -164,13 +164,11 @@ func actionGetOne(w http.ResponseWriter, r *http.Request) {
 func actionCreate(w http.ResponseWriter, r *http.Request) {
 	var (
 		element Contentelement
-		rsp     = core.Response{Data: &element}
+		rsp     = core.Response{Data: &element, Req: r}
 	)
 
-	if rsp.IsJsonParseDone(r.Body) {
-		if rsp.IsValidate() {
-			App.DB.Create(&element)
-		}
+	if rsp.IsJsonParseDone(r.Body) && rsp.IsValidate() {
+		App.DB.Create(&element)
 	}
 
 	rsp.Data = &element
@@ -198,7 +196,7 @@ func actionUpdate(w http.ResponseWriter, r *http.Request) {
 	var (
 		data    Contentelement
 		element Contentelement
-		rsp     = core.Response{Data: &data}
+		rsp     = core.Response{Data: &data, Req: r}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -228,7 +226,7 @@ func actionUpdate(w http.ResponseWriter, r *http.Request) {
 func actionDelete(w http.ResponseWriter, r *http.Request) {
 	var (
 		element Contentelement
-		rsp     = core.Response{Data: &element}
+		rsp     = core.Response{Data: &element, Req: r}
 	)
 
 	vars := mux.Vars(r)
@@ -252,7 +250,7 @@ func actionDelete(w http.ResponseWriter, r *http.Request) {
 func actionComments(w http.ResponseWriter, r *http.Request) {
 	var (
 		comments Contentcomments
-		rsp      = core.Response{Data: &comments}
+		rsp      = core.Response{Data: &comments, Req: r}
 		limit    = r.FormValue("limit")
 		offset   = r.FormValue("offset")
 		db       = App.DB
@@ -282,7 +280,7 @@ func actionAddComment(w http.ResponseWriter, r *http.Request) {
 	var (
 		element Contentelement
 		comment Contentcomment
-		rsp     = core.Response{Data: &comment}
+		rsp     = core.Response{Data: &comment, Req: r}
 		vars    = mux.Vars(r)
 	)
 
@@ -309,7 +307,7 @@ func actionUpdateComment(w http.ResponseWriter, r *http.Request) {
 	var (
 		data    Contentcomment
 		comment Contentcomment
-		rsp     = core.Response{Data: &data}
+		rsp     = core.Response{Data: &data, Req: r}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -339,7 +337,7 @@ func actionUpdateComment(w http.ResponseWriter, r *http.Request) {
 func actionDeleteComment(w http.ResponseWriter, r *http.Request) {
 	var (
 		comment Contentcomment
-		rsp     = core.Response{Data: &comment}
+		rsp     = core.Response{Data: &comment, Req: r}
 	)
 
 	vars := mux.Vars(r)
@@ -363,7 +361,7 @@ func actionDeleteComment(w http.ResponseWriter, r *http.Request) {
 func actionTags(w http.ResponseWriter, r *http.Request) {
 	var (
 		tags Contenttags
-		rsp  = core.Response{Data: &tags}
+		rsp  = core.Response{Data: &tags, Req: r}
 		sort = r.FormValue("sort")
 		db   = App.DB
 	)

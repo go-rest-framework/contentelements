@@ -142,7 +142,7 @@ func deleteElement(t *testing.T, id uint) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readUserBody(resp, t)
+	u := readElementBody(resp, t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
