@@ -25,7 +25,7 @@ var CatTitle string
 var NewsOneTitle string
 var NewsTwoTitle string
 var CommentId uint
-var Murl = "http://gorest.ga/api/contentelements"
+var Murl = "http://localhost/api/contentelements"
 
 type TestContentelements struct {
 	Errors []core.ErrorMsg                 `json:"errors"`
@@ -161,7 +161,7 @@ func toUrlcode(str string) (string, error) {
 
 func TestAdminLogin(t *testing.T) {
 
-	url := "http://gorest.ga/api/users/login"
+	url := "http://localhost/api/users/login"
 	var userJson = `{"email":"admin@admin.a", "password":"adminpass"}`
 
 	resp := doRequest(url, "POST", userJson, "")
@@ -179,7 +179,7 @@ func TestAdminLogin(t *testing.T) {
 
 func TestUserLogin(t *testing.T) {
 
-	url := "http://gorest.ga/api/users/login"
+	url := "http://localhost/api/users/login"
 	var userJson = `{"email":"testuser@test.t", "password":"testpass"}`
 
 	resp := doRequest(url, "POST", userJson, "")
@@ -582,7 +582,7 @@ func TestDeleteComments(t *testing.T) {
 }
 
 func TestGetTags(t *testing.T) {
-	url := "http://gorest.ga/api/contenttags"
+	url := "http://localhost/api/contenttags"
 
 	resp := doRequest(url, "GET", "", "")
 
@@ -603,24 +603,24 @@ func TestGetTags(t *testing.T) {
 	return
 }
 
-func TestDelete(t *testing.T) {
-	url := fmt.Sprintf("%s%s%d", Murl, "/", 0)
+//func TestDelete(t *testing.T) {
+//url := fmt.Sprintf("%s%s%d", Murl, "/", 0)
 
-	resp := doRequest(url, "DELETE", "", AdminToken)
+//resp := doRequest(url, "DELETE", "", AdminToken)
 
-	if resp.StatusCode != 200 {
-		t.Errorf("Success expected: %d", resp.StatusCode)
-	}
+//if resp.StatusCode != 200 {
+//t.Errorf("Success expected: %d", resp.StatusCode)
+//}
 
-	u := readUserBody(resp, t)
+//u := readUserBody(resp, t)
 
-	if len(u.Errors) == 0 {
-		t.Fatal("wrong id validation dont work")
-	}
+//if len(u.Errors) == 0 {
+//t.Fatal("wrong id validation dont work")
+//}
 
-	deleteElement(t, CatId)
-	deleteElement(t, NewsOneId)
-	deleteElement(t, NewsTwoId)
+//deleteElement(t, CatId)
+//deleteElement(t, NewsOneId)
+//deleteElement(t, NewsTwoId)
 
-	return
-}
+//return
+//}

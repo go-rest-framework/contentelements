@@ -54,19 +54,19 @@ func Configure(a core.App) {
 
 	App.DB.AutoMigrate(&Contentelement{}, &Contentcomment{}, &Contenttag{})
 
-	App.R.HandleFunc("/api/contentelements", actionGetAll).Methods("GET")
-	App.R.HandleFunc("/api/contentelements/{id}", actionGetOne).Methods("GET")
+	App.R.HandleFunc("/contentelements", actionGetAll).Methods("GET")
+	App.R.HandleFunc("/contentelements/{id}", actionGetOne).Methods("GET")
 
-	App.R.HandleFunc("/api/contentelements", App.Protect(actionCreate, []string{"admin"})).Methods("POST")
-	App.R.HandleFunc("/api/contentelements/{id}", App.Protect(actionUpdate, []string{"admin"})).Methods("PATCH")
-	App.R.HandleFunc("/api/contentelements/{id}", App.Protect(actionDelete, []string{"admin"})).Methods("DELETE")
+	App.R.HandleFunc("/contentelements", App.Protect(actionCreate, []string{"admin"})).Methods("POST")
+	App.R.HandleFunc("/contentelements/{id}", App.Protect(actionUpdate, []string{"admin"})).Methods("PATCH")
+	App.R.HandleFunc("/contentelements/{id}", App.Protect(actionDelete, []string{"admin"})).Methods("DELETE")
 
-	App.R.HandleFunc("/api/contentelements/{id}/comments", actionComments).Methods("GET")
-	App.R.HandleFunc("/api/contentelements/{id}/comments", App.Protect(actionAddComment, []string{"user"})).Methods("POST")
-	App.R.HandleFunc("/api/contentelements/{id}/comments/{cid}", App.Protect(actionUpdateComment, []string{"user"})).Methods("PATCH")
-	App.R.HandleFunc("/api/contentelements/{id}/comments/{cid}", App.Protect(actionDeleteComment, []string{"user"})).Methods("DELETE")
+	App.R.HandleFunc("/contentelements/{id}/comments", actionComments).Methods("GET")
+	App.R.HandleFunc("/contentelements/{id}/comments", App.Protect(actionAddComment, []string{"user"})).Methods("POST")
+	App.R.HandleFunc("/contentelements/{id}/comments/{cid}", App.Protect(actionUpdateComment, []string{"user"})).Methods("PATCH")
+	App.R.HandleFunc("/contentelements/{id}/comments/{cid}", App.Protect(actionDeleteComment, []string{"user"})).Methods("DELETE")
 
-	App.R.HandleFunc("/api/contenttags", actionTags).Methods("GET")
+	App.R.HandleFunc("/contenttags", actionTags).Methods("GET")
 }
 
 func actionGetAll(w http.ResponseWriter, r *http.Request) {
