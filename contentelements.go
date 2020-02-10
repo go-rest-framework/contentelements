@@ -3,6 +3,7 @@ package contentelements
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-rest-framework/core"
@@ -19,16 +20,16 @@ type Contenttags []Contenttag
 
 type Contentelement struct {
 	gorm.Model
-	Urld        string           `json:"urld"`
+	Urld        string           `json:"urld" valid:"ascii,required"`
 	UserID      int              `json:"userID"`
 	Parent      int              `json:"parent"`
-	Title       string           `json:"title"`
+	Title       string           `json:"title" valid:"required"`
 	Description string           `json:"description" gorm:"type:varchar(500)"`
 	Content     string           `json:"content" gorm:"type:text"`
 	Meta_title  string           `json:"meta_title"`
 	Meta_descr  string           `json:"meta_descr" gorm:"type:text"`
-	Kind        int              `json:"kind"`
-	Status      int              `json:"status"`
+	Kind        string           `json:"kind"`
+	Status      string           `json:"status" valid:"required,in(active|suspend|draft)"`
 	Tags        string           `json:"tags"`
 	Elements    []Contentelement `json:"elements" gorm:"auto_preload;foreignkey:Parent"`
 	Comments    []Contentcomment `json:"comments"`
@@ -83,6 +84,8 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 		tree        = r.FormValue("tree")
 		limit       = r.FormValue("limit")
 		offset      = r.FormValue("offset")
+		tags        = r.FormValue("tags")
+		status      = r.FormValue("status")
 		db          = App.DB
 	)
 
@@ -90,7 +93,7 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 		db = db.Where("id LIKE ?", "%"+all+"%")
 		db = db.Or("title LIKE ?", "%"+all+"%")
 		db = db.Or("description LIKE ?", "%"+all+"%")
-		db = db.Or("content LIKE ?", "%"+all+"%")
+		db = db.Or("tags LIKE ?", "%"+all+"%")
 	}
 
 	if id != "" {
@@ -109,25 +112,66 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 		db = db.Where("content LIKE ?", "%"+content+"%")
 	}
 
-	if parent != "" {
-		db = db.Where("parent = ?", parent)
-	}
-
-	if sort != "" {
-		db = db.Order(sort)
-	}
-
 	if limit != "" {
 		db = db.Limit(limit)
+	} else {
+		db = db.Limit(5)
 	}
 
 	if offset != "" {
 		db = db.Offset(offset)
 	}
 
-	if tree == "1" {
+	if tags != "" {
+		db = db.Where("tags LIKE ?", "%"+tags+"%")
+	}
+
+	if status != "" {
+		db = db.Where("status = ?", status)
+	}
+
+	if parent != "" {
+		db = db.Where("parent = ?", parent)
+	} else {
+		if tree != "0" {
+			db = db.Where("parent = ?", 0)
+		}
+	}
+
+	if tree != "0" {
 		db = db.Set("gorm:auto_preload", true)
 		db = db.Preload("Elements")
+	}
+
+	if sort != "" {
+		switch sort {
+		case "id":
+			db = db.Order("id")
+		case "-id":
+			db = db.Order("id DESC")
+		case "title":
+			db = db.Order("title")
+		case "-title":
+			db = db.Order("title DESC")
+		case "created_at":
+			db = db.Order("created_at")
+		case "-created_at":
+			db = db.Order("created_at DESC")
+		case "status":
+			db = db.Order("status")
+		case "-status":
+			db = db.Order("status DESC")
+		case "user":
+			db = db.Order("user_id")
+		case "-user":
+			db = db.Order("user_id DESC")
+		case "kind":
+			db = db.Order("kind")
+		case "-kind":
+			db = db.Order("kind DESC")
+		}
+	} else {
+		db = db.Order("id DESC")
 	}
 
 	db.Find(&elements)
@@ -168,6 +212,11 @@ func actionCreate(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if rsp.IsJsonParseDone(r.Body) && rsp.IsValidate() {
+		i, err := strconv.Atoi(r.Header.Get("id"))
+		if err != nil {
+			rsp.Errors.Add("json", "User getting error"+err.Error())
+		}
+		element.UserID = i
 		App.DB.Create(&element)
 	}
 

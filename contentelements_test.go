@@ -18,12 +18,29 @@ import (
 
 var AdminToken string
 var UserToken string
-var CatId uint
+var CatId1 uint
+var CatId2 uint
 var NewsOneId uint
 var NewsTwoId uint
+var PostOneId uint
+var PostTwoId uint
 var CatTitle string
 var NewsOneTitle string
+var NewsOneOneTitle string
+var NewsOneTwoTitle string
 var NewsTwoTitle string
+var NewsTwoOneTitle string
+var NewsTwoTwoTitle string
+
+var OneTags string
+var OneOneTags string
+var OneTwoTags string
+var TwoTags string
+var TwoOneTags string
+var TwoTwoTags string
+
+var NewTags string
+
 var CommentId uint
 var Murl = "http://localhost/api/contentelements"
 
@@ -195,28 +212,25 @@ func TestUserLogin(t *testing.T) {
 	return
 }
 
-func TestCreate(t *testing.T) {
+func CreateOne(t *testing.T, parent int, title string, tags string) uint {
 	url := Murl
-	CatTitle = fake.Title()
-	NewsOneTitle = fake.Title()
-	NewsTwoTitle = fake.Title()
 	el := &contentelements.Contentelement{
 		Urld:        fake.Word(),
-		UserID:      1,
-		Title:       CatTitle,
+		Parent:      parent,
+		Title:       title,
 		Description: fake.ParagraphsN(1),
 		Content:     fake.Paragraphs(),
 		Meta_title:  fake.Title(),
 		Meta_descr:  fake.ParagraphsN(1),
-		Kind:        1,
-		Status:      1,
-		Tags:        "news",
+		Kind:        "standart",
+		Status:      "active",
+		Tags:        tags,
 	}
 
 	uj, err := json.Marshal(el)
 	if err != nil {
 		fmt.Printf("Error: %s", err)
-		return
+		return 0
 	}
 
 	resp := doRequest(url, "POST", string(uj), AdminToken)
@@ -231,84 +245,61 @@ func TestCreate(t *testing.T) {
 		t.Fatal(u.Errors)
 	}
 
-	CatId = u.Data.ID
+	return u.Data.ID
+}
 
-	el = &contentelements.Contentelement{
-		Urld:        fake.Word(),
-		UserID:      1,
-		Parent:      int(CatId),
-		Title:       NewsOneTitle,
-		Description: fake.ParagraphsN(1),
-		Content:     fake.Paragraphs(),
-		Meta_title:  fake.Title(),
-		Meta_descr:  fake.ParagraphsN(1),
-		Kind:        1,
-		Status:      1,
-		Tags:        "news,test",
-	}
+func TestCreate(t *testing.T) {
 
-	uj, err = json.Marshal(el)
-	if err != nil {
-		fmt.Printf("Error: %s", err)
-		return
-	}
+	NewsOneTitle = fake.Title()
+	NewsOneOneTitle = fake.Title()
+	NewsOneTwoTitle = fake.Title()
+	NewsTwoTitle = fake.Title()
+	NewsTwoOneTitle = fake.Title()
+	NewsTwoTwoTitle = fake.Title()
 
-	resp = doRequest(url, "POST", string(uj), AdminToken)
+	OneTags = fake.Word()
+	OneOneTags = fake.Word()
+	OneTwoTags = fake.Word()
+	TwoTags = fake.Word()
+	TwoOneTags = fake.Word()
+	TwoTwoTags = fake.Word()
 
-	if resp.StatusCode != 200 {
-		t.Errorf("Success expected: %d", resp.StatusCode)
-	}
-
-	u = readUserBody(resp, t)
-
-	if len(u.Errors) != 0 {
-		t.Fatal(u.Errors)
-	}
-
-	NewsOneId = u.Data.ID
-
-	el = &contentelements.Contentelement{
-		Urld:        fake.Word(),
-		UserID:      1,
-		Parent:      int(CatId),
-		Title:       NewsTwoTitle,
-		Description: fake.ParagraphsN(1),
-		Content:     fake.Paragraphs(),
-		Meta_title:  fake.Title(),
-		Meta_descr:  fake.ParagraphsN(1),
-		Kind:        1,
-		Status:      1,
-		Tags:        "news,test,check",
-	}
-
-	uj, err = json.Marshal(el)
-	if err != nil {
-		fmt.Printf("Error: %s", err)
-		return
-	}
-
-	resp = doRequest(url, "POST", string(uj), AdminToken)
-
-	if resp.StatusCode != 200 {
-		t.Errorf("Success expected: %d", resp.StatusCode)
-	}
-
-	u = readUserBody(resp, t)
-
-	if len(u.Errors) != 0 {
-		t.Fatal(u.Errors)
-	}
-
-	NewsTwoId = u.Data.ID
+	CatId1 = CreateOne(t, 0, NewsOneTitle, OneTags)
+	NewsOneId = CreateOne(t, int(CatId1), NewsOneOneTitle, OneOneTags)
+	NewsTwoId = CreateOne(t, int(CatId1), NewsOneTwoTitle, OneTwoTags)
+	CatId2 = CreateOne(t, 0, NewsTwoTitle, TwoTags)
+	PostOneId = CreateOne(t, int(CatId2), NewsTwoOneTitle, TwoOneTags)
+	PostTwoId = CreateOne(t, int(CatId2), NewsTwoTwoTitle, TwoTwoTags)
 
 	return
 }
 
 func TestUpdate(t *testing.T) {
-	url := fmt.Sprintf("%s%s%d", Murl, "/", CatId)
-	userJson := `{"title":"` + fake.Title() + `"}`
+	url := fmt.Sprintf("%s%s%d", Murl, "/", CatId1)
 
-	resp := doRequest(url, "PATCH", userJson, AdminToken)
+	NewTags = fake.Word()
+
+	el := &contentelements.Contentelement{
+		Urld:        fake.Word(),
+		Parent:      0,
+		UserID:      1,
+		Title:       NewsOneTitle,
+		Description: fake.ParagraphsN(1),
+		Content:     fake.Paragraphs(),
+		Meta_title:  fake.Title(),
+		Meta_descr:  fake.ParagraphsN(1),
+		Kind:        "standart",
+		Status:      "active",
+		Tags:        NewTags,
+	}
+
+	uj, err := json.Marshal(el)
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
+
+	resp := doRequest(url, "PATCH", string(uj), AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
@@ -323,11 +314,10 @@ func TestUpdate(t *testing.T) {
 	return
 }
 
-func TestGetAll(t *testing.T) {
-	// get count
-	url := Murl
-
+func GetOne(t *testing.T, url string) TestContentelements {
 	resp := doRequest(url, "GET", "", " ")
+
+	fmt.Println(url)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
@@ -339,50 +329,85 @@ func TestGetAll(t *testing.T) {
 		t.Fatal(u.Errors)
 	}
 
-	if len(u.Data) != 3 {
-		t.Errorf("Wrong elements count: %d", len(u.Data))
+	return u
+}
+
+func TestGetAll(t *testing.T) {
+	//find limit 1 offset 1 and get second element
+	u := GetOne(t, Murl+"?limit=1&offset=1")
+
+	if len(u.Data) != 1 {
+		t.Errorf("Wrong limit and offset search count: %d, need 1", len(u.Data))
 	}
-
-	//---------------
-
+	//find by title in all
 	utitle, _ := toUrlcode(NewsTwoTitle)
+	u = GetOne(t, Murl+"?all="+utitle)
 
-	url1 := Murl + "?title=" + utitle
+	if u.Data[0].Title != NewsTwoTitle {
+		t.Errorf("Wrong title search - : %s", u.Data[0].Title)
+	}
+	//find by tags in all
+	u = GetOne(t, Murl+"?all="+OneOneTags)
 
-	resp1 := doRequest(url1, "GET", "", " ")
+	if len(u.Data) != 1 {
+		t.Errorf("Wrong tag search count: %d, need 1", len(u.Data))
+	}
+	//find by parent and title
+	utitle, _ = toUrlcode(NewsOneOneTitle)
+	u = GetOne(t, Murl+"?parent="+fmt.Sprintf("%d", CatId1)+"&title="+utitle)
 
-	if resp1.StatusCode != 200 {
-		t.Errorf("Success expected: %d%s", resp1.StatusCode, url1)
+	if len(u.Data) != 1 {
+		t.Errorf("Wrong parent and title search count: %d, need 1", len(u.Data))
+	}
+	//find by parent, title and status and get 0 elements
+	utitle, _ = toUrlcode(NewsOneOneTitle)
+	u = GetOne(t, Murl+"?parent="+fmt.Sprintf("%d", CatId1)+"&title="+utitle+"&status=draft")
+
+	if len(u.Data) != 0 {
+		t.Errorf("Wrong parent, title and status search count: %d, need 0", len(u.Data))
+	}
+	//set tree = 0 and get more elements in counts
+	u = GetOne(t, Murl+"?tree=0")
+
+	if len(u.Data) != 6 {
+		t.Errorf("Wrong parent, title and status search count: %d, need 6", len(u.Data))
 	}
 
-	u1 := readElementsBody(resp1, t)
+	//sort by id
+	u = GetOne(t, Murl+"?sort=id")
 
-	if len(u1.Errors) != 0 {
-		t.Fatal(u1.Errors)
+	if u.Data[0].ID != CatId1 {
+		t.Errorf("Wrong sorting by id first id: %d, need %d", u.Data[0].ID, CatId1)
 	}
+	//sort by -id
+	u = GetOne(t, Murl+"?sort=-id")
 
-	if u1.Data[0].Title != NewsTwoTitle {
-		t.Errorf("Wrong title search - : %s", u1.Data[0].Title)
+	if u.Data[0].ID != CatId2 {
+		t.Errorf("Wrong sorting by -id first id: %d, need %d", u.Data[0].ID, CatId2)
 	}
+	//sort by title
+	u = GetOne(t, Murl+"?sort=title")
 
-	//---------------
-
-	url2 := Murl + "?parent=" + fmt.Sprintf("%d", CatId)
-
-	resp2 := doRequest(url2, "GET", "", " ")
-
-	if resp2.StatusCode != 200 {
-		t.Errorf("Success expected: %d %s", resp2.StatusCode, url2)
+	if u.Data[0].ID != CatId1 {
+		t.Errorf("Wrong sorting by title first id: %d, need %d", u.Data[0].ID, CatId1)
 	}
+	//sort by -title
+	u = GetOne(t, Murl+"?sort=-title")
 
-	u2 := readElementsBody(resp2, t)
-
-	if len(u2.Errors) != 0 {
-		t.Fatal(u2.Errors)
+	if u.Data[0].ID != CatId2 {
+		t.Errorf("Wrong sorting by -title first id: %d, need %d", u.Data[0].ID, CatId2)
 	}
+	//sort by created_at
+	u = GetOne(t, Murl+"?sort=created_at")
 
-	if len(u2.Data) != 2 {
-		t.Errorf("Wrong childrens search: %d %s", len(u2.Data), url2)
+	if u.Data[0].ID != CatId1 {
+		t.Errorf("Wrong sorting by created_at first id: %d, need %d", u.Data[0].ID, CatId1)
+	}
+	//sort by -created_at
+	u = GetOne(t, Murl+"?sort=-created_at")
+
+	if u.Data[0].ID != CatId2 {
+		t.Errorf("Wrong sorting by -created_at first id: %d, need %d", u.Data[0].ID, CatId2)
 	}
 
 	return
@@ -402,7 +427,7 @@ func TestGetOne(t *testing.T) {
 		t.Fatal("element not found dont work")
 	}
 
-	url = fmt.Sprintf("%s%s%d", Murl, "/", CatId)
+	url = fmt.Sprintf("%s%s%d", Murl, "/", CatId1)
 
 	resp = doRequest(url, "GET", "", " ")
 
