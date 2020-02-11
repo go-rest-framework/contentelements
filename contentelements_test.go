@@ -317,8 +317,6 @@ func TestUpdate(t *testing.T) {
 func GetOne(t *testing.T, url string) TestContentelements {
 	resp := doRequest(url, "GET", "", " ")
 
-	fmt.Println(url)
-
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
@@ -347,10 +345,10 @@ func TestGetAll(t *testing.T) {
 		t.Errorf("Wrong title search - : %s", u.Data[0].Title)
 	}
 	//find by tags in all
-	u = GetOne(t, Murl+"?all="+OneOneTags)
+	u = GetOne(t, Murl+"?tags="+NewTags)
 
-	if len(u.Data) != 1 {
-		t.Errorf("Wrong tag search count: %d, need 1", len(u.Data))
+	if len(u.Data) == 0 {
+		t.Errorf("Wrong tag search count: %d, need > 0", len(u.Data))
 	}
 	//find by parent and title
 	utitle, _ = toUrlcode(NewsOneOneTitle)
@@ -367,47 +365,48 @@ func TestGetAll(t *testing.T) {
 		t.Errorf("Wrong parent, title and status search count: %d, need 0", len(u.Data))
 	}
 	//set tree = 0 and get more elements in counts
-	u = GetOne(t, Murl+"?tree=0")
+	utitle, _ = toUrlcode(NewsOneTitle)
+	u = GetOne(t, Murl+"?tree=0&title="+utitle)
 
-	if len(u.Data) != 6 {
-		t.Errorf("Wrong parent, title and status search count: %d, need 6", len(u.Data))
+	if len(u.Data) != 1 {
+		t.Errorf("Wrong search with tree false search count: %d, need 1", len(u.Data))
 	}
 
 	//sort by id
 	u = GetOne(t, Murl+"?sort=id")
 
-	if u.Data[0].ID != CatId1 {
-		t.Errorf("Wrong sorting by id first id: %d, need %d", u.Data[0].ID, CatId1)
+	if u.Data[0].ID > u.Data[1].ID {
+		t.Errorf("Wrong sorting by id %d not < %d", u.Data[0].ID, u.Data[1].ID)
 	}
 	//sort by -id
 	u = GetOne(t, Murl+"?sort=-id")
 
-	if u.Data[0].ID != CatId2 {
-		t.Errorf("Wrong sorting by -id first id: %d, need %d", u.Data[0].ID, CatId2)
+	if u.Data[0].ID < u.Data[1].ID {
+		t.Errorf("Wrong sorting by -id %d not > %d", u.Data[0].ID, u.Data[1].ID)
 	}
 	//sort by title
 	u = GetOne(t, Murl+"?sort=title")
 
-	if u.Data[0].ID != CatId1 {
-		t.Errorf("Wrong sorting by title first id: %d, need %d", u.Data[0].ID, CatId1)
+	if u.Data[0].Title > u.Data[1].Title {
+		t.Errorf("Wrong sorting by title %s not < %s", u.Data[0].Title, u.Data[1].Title)
 	}
 	//sort by -title
 	u = GetOne(t, Murl+"?sort=-title")
 
-	if u.Data[0].ID != CatId2 {
-		t.Errorf("Wrong sorting by -title first id: %d, need %d", u.Data[0].ID, CatId2)
+	if u.Data[0].Title < u.Data[1].Title {
+		t.Errorf("Wrong sorting by -title %s not > %s", u.Data[0].Title, u.Data[1].Title)
 	}
 	//sort by created_at
 	u = GetOne(t, Murl+"?sort=created_at")
 
-	if u.Data[0].ID != CatId1 {
-		t.Errorf("Wrong sorting by created_at first id: %d, need %d", u.Data[0].ID, CatId1)
+	if u.Data[0].CreatedAt.Unix() > u.Data[1].CreatedAt.Unix() {
+		t.Errorf("Wrong sorting by created_at %d not < %d", u.Data[0].CreatedAt.Unix(), u.Data[1].CreatedAt.Unix())
 	}
 	//sort by -created_at
 	u = GetOne(t, Murl+"?sort=-created_at")
 
-	if u.Data[0].ID != CatId2 {
-		t.Errorf("Wrong sorting by -created_at first id: %d, need %d", u.Data[0].ID, CatId2)
+	if u.Data[0].CreatedAt.Unix() < u.Data[1].CreatedAt.Unix() {
+		t.Errorf("Wrong sorting by -created_at %d not > %d", u.Data[0].CreatedAt.Unix(), u.Data[1].CreatedAt.Unix())
 	}
 
 	return
