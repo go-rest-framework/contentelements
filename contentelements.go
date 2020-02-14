@@ -73,6 +73,7 @@ func Configure(a core.App) {
 func actionGetAll(w http.ResponseWriter, r *http.Request) {
 	var (
 		elements    Contentelements
+		count       int
 		rsp         = core.Response{Data: &elements, Req: r}
 		all         = r.FormValue("all")
 		id          = r.FormValue("id")
@@ -112,16 +113,6 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 		db = db.Where("content LIKE ?", "%"+content+"%")
 	}
 
-	if limit != "" {
-		db = db.Limit(limit)
-	} else {
-		db = db.Limit(5)
-	}
-
-	if offset != "" {
-		db = db.Offset(offset)
-	}
-
 	if tags != "" {
 		db = db.Where("tags LIKE ?", "%"+tags+"%")
 	}
@@ -130,15 +121,15 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 		db = db.Where("status = ?", status)
 	}
 
-	if parent != "" {
+	if parent != "" || parent == "0" {
 		db = db.Where("parent = ?", parent)
 	} else {
-		if tree != "0" {
+		if tree != "-1" {
 			db = db.Where("parent = ?", 0)
 		}
 	}
 
-	if tree != "0" {
+	if tree == "" || tree == "1" {
 		db = db.Set("gorm:auto_preload", true)
 		db = db.Preload("Elements")
 	}
@@ -174,9 +165,22 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 		db = db.Order("id DESC")
 	}
 
+	db.Find(&elements).Count(&count)
+
+	if limit != "" {
+		db = db.Limit(limit)
+	} else {
+		db = db.Limit(5)
+	}
+
+	if offset != "" {
+		db = db.Offset(offset)
+	}
+
 	db.Find(&elements)
 
 	rsp.Data = &elements
+	rsp.Count = count
 
 	w.Write(rsp.Make())
 }
