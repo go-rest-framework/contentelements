@@ -50,6 +50,13 @@ type Contenttag struct {
 	Weight int    `json:"weight"`
 }
 
+type Parent struct {
+	Id   uint
+	Name string
+}
+
+type Parents []Parent
+
 func Configure(a core.App) {
 	App = a
 
@@ -68,6 +75,7 @@ func Configure(a core.App) {
 	App.R.HandleFunc("/contentelements/{id}/comments/{cid}", App.Protect(actionDeleteComment, []string{"user"})).Methods("DELETE")
 
 	App.R.HandleFunc("/contenttags", actionTags).Methods("GET")
+	App.R.HandleFunc("/parents", actionParents).Methods("GET")
 }
 
 func actionGetAll(w http.ResponseWriter, r *http.Request) {
@@ -428,4 +436,49 @@ func actionTags(w http.ResponseWriter, r *http.Request) {
 	rsp.Data = &tags
 
 	w.Write(rsp.Make())
+}
+
+func actionParents(w http.ResponseWriter, r *http.Request) {
+	var (
+		elements Contentelements
+		res      Parents
+		rsp      = core.Response{Data: &res, Req: r}
+		db       = App.DB
+	)
+
+	db = db.Select("id, urld")
+	db = db.Where("status = ?", "active")
+	db = db.Where("parent = ?", 0)
+	db = db.Set("gorm:auto_preload", true)
+	db = db.Preload("Elements")
+
+	db.Find(&elements)
+
+	for _, v := range elements {
+		res = append(res, Parent{
+			Id:   v.ID,
+			Name: v.Urld + fmt.Sprintf("%d", v.Parent),
+		})
+
+		res = genSubParents(res, v.Elements, 1)
+	}
+
+	fmt.Println(res)
+
+	rsp.Data = &res
+
+	w.Write(rsp.Make())
+}
+
+func genSubParents(list Parents, elements Contentelements, lvl int) Parents {
+	for _, v := range elements {
+		list = append(list, Parent{
+			Id:   v.ID,
+			Name: strings.Repeat("--", lvl) + v.Urld + fmt.Sprintf("%d", v.Parent),
+		})
+
+		list = genSubParents(list, v.Elements, lvl+1)
+	}
+
+	return list
 }

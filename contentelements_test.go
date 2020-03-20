@@ -74,6 +74,11 @@ type TestUser struct {
 	Data   users.User      `json:"data"`
 }
 
+type TestParents struct {
+	Errors []core.ErrorMsg         `json:"errors"`
+	Data   contentelements.Parents `json:"data"`
+}
+
 func doRequest(url, proto, userJson, token string) *http.Response {
 	reader := strings.NewReader(userJson)
 	request, err := http.NewRequest(proto, url, reader)
@@ -147,6 +152,16 @@ func readUserBody(r *http.Response, t *testing.T) TestUser {
 	}
 	json.Unmarshal([]byte(body), &u)
 	defer r.Body.Close()
+	return u
+}
+
+func readParentsBody(r *http.Response, t *testing.T) TestParents {
+	var u TestParents
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	json.Unmarshal([]byte(body), &u)
 	return u
 }
 
@@ -622,6 +637,28 @@ func TestGetTags(t *testing.T) {
 
 	if len(u.Data) < 1 {
 		t.Errorf("Wrong comments count: %d", len(u.Data))
+	}
+
+	return
+}
+
+func TestGetParentList(t *testing.T) {
+	url := "http://localhost/api/parents"
+
+	resp := doRequest(url, "GET", "", "")
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u := readParentsBody(resp, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if len(u.Data) < 2 {
+		t.Errorf("Wrong parents count: %d", len(u.Data))
 	}
 
 	return
