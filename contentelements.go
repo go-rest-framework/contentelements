@@ -446,7 +446,7 @@ func actionParents(w http.ResponseWriter, r *http.Request) {
 		db       = App.DB
 	)
 
-	db = db.Select("id, urld")
+	db = db.Select("id, title")
 	db = db.Where("status = ?", "active")
 	db = db.Where("parent = ?", 0)
 	db = db.Set("gorm:auto_preload", true)
@@ -457,7 +457,7 @@ func actionParents(w http.ResponseWriter, r *http.Request) {
 	for _, v := range elements {
 		res = append(res, Parent{
 			Id:   v.ID,
-			Name: v.Urld + fmt.Sprintf("%d", v.Parent),
+			Name: v.Title + fmt.Sprintf("%d", v.Parent),
 		})
 
 		res = genSubParents(res, v.Elements, 1)
@@ -474,9 +474,8 @@ func genSubParents(list Parents, elements Contentelements, lvl int) Parents {
 	for _, v := range elements {
 		list = append(list, Parent{
 			Id:   v.ID,
-			Name: strings.Repeat("--", lvl) + v.Urld + fmt.Sprintf("%d", v.Parent),
+			Name: strings.Repeat("--", lvl) + " " + v.Title + fmt.Sprintf("%d", v.Parent),
 		})
-
 		list = genSubParents(list, v.Elements, lvl+1)
 	}
 
